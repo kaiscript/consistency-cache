@@ -58,9 +58,23 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
     public ConsistencyFuture dispatcher(T task) {
         ConsistencyContext context = task.getContext();
         int index = context.getKey().hashCode() % queueNum;
-        queueMap.get(index).offer(task);
+        if (!checkCache(task)) {
+            queueMap.get(index).offer(task);
+        }
         logger.info("dispatcher task:{}", task);
         return task.getFuture();
+    }
+
+    private boolean checkCache(T task) {
+        ConsistencyContext context = task.getContext();
+        if (context.getOperationType() == OperationType.QUERY.getValue()) {
+            Object o = cache.get(context.getKey());
+            if (o != null) {
+                task.notifyResult(o);
+                return true;
+            }
+        }
+        return false;
     }
 
 
@@ -76,6 +90,8 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
                 break;
             case 3:
                 removeCache(task, queue);
+                break;
+            default:
                 break;
         }
 
