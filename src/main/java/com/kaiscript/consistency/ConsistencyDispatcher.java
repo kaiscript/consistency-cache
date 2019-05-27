@@ -45,7 +45,7 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
                     if (task == null) {
                         continue;
                     }
-                    logger.info("poll task:{}", task);
+                    logger.info("{}-queue poll task:{}", index, task);
                     exec(task, queue);
                     if (consumePeriod != 0) {
                         CommonUtil.sleep(consumePeriod);
@@ -118,7 +118,7 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
                 }
 
             } catch (Exception e) {
-                e.printStackTrace();
+                logger.error("queryOrUpdate task:{},error", task, e);
             }
         }
     }
@@ -126,8 +126,9 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
     private void update(T task, Queue<T> queue) {
         ConsistencyContext context = task.getContext();
         String key = context.getKey();
+        cache.remove(key);
         Object data = task.loadData();
-        logger.info("UPDATE task:{},result:{}", task, data);
+        logger.info("UPDATE task:{},data:{}", task, data);
         if (data != null) {
             cache.put(key, data);
             task.notifyResult(data);
@@ -147,9 +148,9 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
             updateTask.getContext().setOperationType(OperationType.UPDATE.getValue());
             return updateTask;
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("buildUpdateTask e", e);
         }
-        return null;
+
     }
 
 }

@@ -43,9 +43,6 @@ public abstract class AbstractConsistencyTask<T>{
         this.context = context;
     }
 
-
-
-
     @Override
     public String toString() {
         return ReflectionToStringBuilder.reflectionToString(this, ToStringStyle.SHORT_PREFIX_STYLE);
