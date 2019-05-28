@@ -14,7 +14,7 @@ public class TestTask extends AbstractQueryTask<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(TestTask.class);
 
     @Override
-    public String getKey() {
+    public String key() {
         return "test";
     }
 
@@ -24,7 +24,7 @@ public class TestTask extends AbstractQueryTask<Integer> {
         int num = random.nextInt();
         logger.info("load data.key:{},type:{},result:{}", getContext().getKey(), getContext().getOperationType(),1234);
 //        return num % 2 == 1 ? 1234 : null;
-        return null;
+        return 1234;
     }
 
 }

@@ -7,7 +7,8 @@ public enum OperationType {
 
     UPDATE(1),
     QUERY(2),
-    DELETE(3);
+    DELETE(3),
+    UPDATE_CACHE(4);
 
     private int value;
 

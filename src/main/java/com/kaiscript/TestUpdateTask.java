@@ -8,7 +8,7 @@ import com.kaiscript.consistency.AbstractUpdateTask;
 public class TestUpdateTask extends AbstractUpdateTask<Integer> {
 
     @Override
-    public String getKey() {
+    public String key() {
         return "test";
     }
 

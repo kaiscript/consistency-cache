@@ -1,5 +1,6 @@
 package com.kaiscript.consistency;
 
+import com.kaiscript.consistency.util.BeanUtils;
 import com.kaiscript.consistency.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,12 +92,32 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
             case 3:
                 removeCache(task, queue);
                 break;
+            case 4:
+                updateCache(task, queue);
+                break;
             default:
                 break;
         }
 
     }
 
+    /**
+     * 查询数据并更新cache
+     * @param task
+     * @param queue
+     */
+    private void updateCache(T task, Queue<T> queue) {
+        Object o = task.loadData();
+        if (o != null) {
+            cache.put(task.getContext().getKey(), o);
+        }
+    }
+
+    /**
+     * 查询缓存。查不到发送 "查询+更新缓存" 操作到队列
+     * @param task
+     * @param queue
+     */
     private void queryOrUpdate(T task, Queue<T> queue) {
         ConsistencyContext context = task.getContext();
         String key = context.getKey();
@@ -106,9 +127,10 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
         }
         else {
             try {
-                T updateTask = buildUpdateTask(task);
-                queue.offer(updateTask);
-                logger.info("queryOrUpdate.offer update task:{}", updateTask);
+                T queryAndUpdateTask = BeanUtils.convert(task);
+                queryAndUpdateTask.getContext().setOperationType(OperationType.UPDATE_CACHE.getValue());
+                queue.offer(queryAndUpdateTask);
+                logger.info("queryOrUpdate.offer updateCache task:{}", queryAndUpdateTask);
                 if (task instanceof AbstractQueryTask) {
                     AbstractQueryTask queryTask = (AbstractQueryTask) task;
                     if (queryTask.needQueryRetry()) {
@@ -128,9 +150,8 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
         String key = context.getKey();
         cache.remove(key);
         Object data = task.loadData();
-        logger.info("UPDATE task:{},data:{}", task, data);
+        logger.info("exec update task:{},data:{}", task, data);
         if (data != null) {
-            cache.put(key, data);
             task.notifyResult(data);
         }
     }
@@ -138,19 +159,6 @@ public class ConsistencyDispatcher<T extends AbstractConsistencyTask> {
 
     private void removeCache(T task, Queue<T> queue) {
         cache.remove(task.getContext().getKey());
-    }
-
-    private T buildUpdateTask(T task) {
-        try {
-            T updateTask = (T) task.getClass().newInstance();
-            updateTask.setContext(task.getContext());
-            updateTask.setFuture(task.getFuture());
-            updateTask.getContext().setOperationType(OperationType.UPDATE.getValue());
-            return updateTask;
-        } catch (Exception e) {
-            throw new RuntimeException("buildUpdateTask e", e);
-        }
-
     }
 
 }

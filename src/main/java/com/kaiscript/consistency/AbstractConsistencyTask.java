@@ -14,12 +14,12 @@ public abstract class AbstractConsistencyTask<T>{
 
     public abstract T loadData();
 
-    public abstract String getKey();
+    public abstract String key();
 
     public abstract int operationType();
 
     public AbstractConsistencyTask() {
-        context.setKey(getKey());
+        context.setKey(key());
         context.setOperationType(operationType());
     }
 
